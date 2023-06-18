@@ -3,7 +3,7 @@
     <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>연습2</title>
+        <title>Map</title>
         <style>
             body {
                 background-color: white;
@@ -51,6 +51,7 @@
         <div>
             <center>
                 <select id="mySelector" size = "1" onchange="handleSelectorChange()">
+                    <option value="op">종류</option>
                     <option value="op0">전체</option>
                     <option value="op1">농산물</option>
                     <option value="op2">축산물</option>
@@ -167,7 +168,7 @@
                 function SJclick() {
                     if (totalPages==0) {
                         totalPages = 1;
-                        fetchAllData(key.slice(-1));;
+                        handleSelectorChange();
                     } else {
                         totalPages=0;
                         clusterer.clear();
@@ -184,23 +185,15 @@
                     return fetch(url).then((res) => res.json());
                 }
 
-                var selectedOption;
-                function handleSelectorChange() { // 셀렉터 기능 
-                    var selector = document.getElementById("mySelector");
-                    selectedOption = selector.options[selector.selectedIndex].text;
-                }
 
                 function displayData(data, searchKeyword) {
                     var markers = [];
-
                     var centers = data.response.body.items;
                     for (var i = 0; i < centers.length; i++) {
                         var rd = centers[i]["rdnmadr"];
                         var tr = centers[i]["trtmntPrdlst"];
                         var keywords = tr.split("+");
-                        console.log(keywords);
                         if (rd.includes(searchKeyword)) {
-                            if (keywords.includes(selectedOption)) {
                                 var lat = centers[i]["latitude"];
                                 var lng = centers[i]["longitude"];
                                 var marker = new kakao.maps.Marker({
@@ -226,33 +219,6 @@
                                 "mouseout",
                                 mouseOutListener(infoWindow)
                             );
-                            } else {
-                                var lat = centers[i]["latitude"];
-                                var lng = centers[i]["longitude"];
-                                var marker = new kakao.maps.Marker({
-                                    position: new kakao.maps.LatLng(lat, lng),
-                                    map: map,
-                                });
-
-                                var infoWindow = new kakao.maps.InfoWindow({
-                                content: centers[i]["mrktNm"],
-                                });
-
-                                // 마커 추가
-                                markers.push(marker);
-
-                                // 마커 이벤트리스너 등록
-                                kakao.maps.event.addListener(
-                                    marker,
-                                    "mouseover",
-                                    mouseOverListener(map, marker, infoWindow)
-                                );
-                                kakao.maps.event.addListener(
-                                    marker,
-                                    "mouseout",
-                                    mouseOutListener(infoWindow)
-                                );
-                                }
                     }}
 
                     clusterer.addMarkers(markers);
@@ -275,7 +241,72 @@
                         console.error("Error fetching data:", error);
                     });
                 }
-                
+
+                var selectedOption;
+                function handleSelectorChange() { // 셀렉터 기능 
+                    var selector = document.getElementById("mySelector");
+                    selectedOption = selector.options[selector.selectedIndex].text;
+                    
+                    function displayData(data, searchKeyword) {
+                        var markers = [];
+                        var centers = data.response.body.items;
+                        for (var i = 0; i < centers.length; i++) {
+                            var rd = centers[i]["rdnmadr"];
+                            var tr = centers[i]["trtmntPrdlst"];
+                            var keywords = tr.split("+");
+                            if (rd.includes(searchKeyword)) {
+                                if (keywords.includes(selectedOption)) {
+                                    var lat = centers[i]["latitude"];
+                                    var lng = centers[i]["longitude"];
+                                    var marker = new kakao.maps.Marker({
+                                        position: new kakao.maps.LatLng(lat, lng),
+                                        map: map,
+                                    });
+
+                                var infoWindow = new kakao.maps.InfoWindow({
+                                    content: centers[i]["mrktNm"],
+                                });
+
+                                // 마커 추가
+                                markers.push(marker);
+
+                                // 마커 이벤트리스너 등록
+                                kakao.maps.event.addListener(
+                                    marker,
+                                    "mouseover",
+                                    mouseOverListener(map, marker, infoWindow)
+                                );
+                                kakao.maps.event.addListener(
+                                    marker,
+                                    "mouseout",
+                                    mouseOutListener(infoWindow)
+                                );
+                                }
+                        }}
+
+                        clusterer.addMarkers(markers);
+                    }
+
+                    function fetchAllData(searchKeyword) {
+                        var promises = [];
+
+                        for (var page = 1; page <= totalPages; page++) {
+                        promises.push(fetchData(page));
+                        }
+
+                        Promise.all(promises)
+                        .then((responses) => {
+                            responses.forEach((data) => {
+                            displayData(data, searchKeyword);
+                            });
+                        })
+                        .catch((error) => {
+                            console.error("Error fetching data:", error);
+                        });
+                    }
+                    clusterer.clear();
+                    fetchAllData("");
+            }
             </script>
 
             <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=14ae2eded7f1716aec00a32a91a20bc8&libraries=clusterer"></script>
@@ -413,7 +444,7 @@
                     key.push(searchKeyword);
                     clusterer.clear();
                     clusterer2.clear(); // 이전 마커 클러스터 및 마커 삭제
-                    fetchAllData(searchKeyword);
+                    handleSelectorChange();
                     fetchAllData2(searchKeyword);
                 }
             </script>
