@@ -85,7 +85,7 @@
                 var mapContainer = document.getElementById("map"); // 지도를 표시할 div
                 var mapOption = {
                 center: new kakao.maps.LatLng(35.13417, 129.11397), // 지도의 중심좌표
-                level: 6, // 지도의 확대 레벨
+                level: 9, // 지도의 확대 레벨
                 };
 
                 var map = new kakao.maps.Map(mapContainer, mapOption);
@@ -242,8 +242,8 @@
                     });
                 }
 
-                var selectedOption;
-                function handleSelectorChange() { // 셀렉터 기능 
+                var selectedOption; 
+                function handleSelectorChange() { // 셀렉터 함수
                     var selector = document.getElementById("mySelector");
                     selectedOption = selector.options[selector.selectedIndex].text;
                     
@@ -254,7 +254,7 @@
                             var rd = centers[i]["rdnmadr"];
                             var tr = centers[i]["trtmntPrdlst"];
                             var keywords = tr.split("+");
-                            if (rd.includes(searchKeyword)) {
+                            if (rd.includes(key.slice(-1)[0])) {
                                 if (keywords.includes(selectedOption)) {
                                     var lat = centers[i]["latitude"];
                                     var lng = centers[i]["longitude"];
@@ -282,8 +282,43 @@
                                     mouseOutListener(infoWindow)
                                 );
                                 }
-                        }}
+                        }} 
+                        if (markers.length==0) { 
+                            if (selectedOption=="전체") {
+                                for (var i = 0; i < centers.length; i++) {
+                                    var rd = centers[i]["rdnmadr"];
+                                    if (rd.includes(key.slice(-1)[0])) {
+                                            var lat = centers[i]["latitude"];
+                                            var lng = centers[i]["longitude"];
+                                            var marker = new kakao.maps.Marker({
+                                                position: new kakao.maps.LatLng(lat, lng),
+                                                map: map,
+                                            });
 
+                                        var infoWindow = new kakao.maps.InfoWindow({
+                                            content: centers[i]["mrktNm"],
+                                        });
+
+                                        // 마커 추가
+                                        markers.push(marker);
+
+                                        // 마커 이벤트리스너 등록
+                                        kakao.maps.event.addListener(
+                                            marker,
+                                            "mouseover",
+                                            mouseOverListener(map, marker, infoWindow)
+                                        );
+                                        kakao.maps.event.addListener(
+                                            marker,
+                                            "mouseout",
+                                            mouseOutListener(infoWindow)
+                                        );
+                                        }
+                                }
+                            }
+
+                        }
+                        console.log(markers.length);
                         clusterer.addMarkers(markers);
                     }
 
@@ -307,11 +342,13 @@
                     clusterer.clear();
                     fetchAllData("");
             }
+
+            
             </script>
 
             <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=14ae2eded7f1716aec00a32a91a20bc8&libraries=clusterer"></script>
             <script>
-                var key = [];
+                var key = [];  // searchkeyword 넣을 리스트
 
                 function mouseOverListener(map, marker, infoWindow) {
                     return function () {
@@ -327,7 +364,7 @@
                 var mapContainer = document.getElementById("map"); // 지도를 표시할 div
                 var mapOption = {
                 center: new kakao.maps.LatLng(35.13417, 129.11397), // 지도의 중심좌표
-                level: 6, // 지도의 확대 레벨
+                level: 9, // 지도의 확대 레벨
                 };
 
                 var map = new kakao.maps.Map(mapContainer, mapOption);
